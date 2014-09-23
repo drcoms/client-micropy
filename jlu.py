@@ -14,10 +14,10 @@ class LoginException (Exception):
   def __init__(self):
     pass
    
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #udp
 foo = socket.getaddrinfo("0.0.0.0", 61440)
-addr = ai[0][4]
-s.bind(addr)
+addr = foo[0][4]
+server.bind(addr)
 
 # s.settimeout(3)
 SALT = ''
@@ -31,24 +31,31 @@ host_name = "LIYUANYUAN"
 host_os = "8089D"
 mac = 0xffffffffffff
 
+client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #udp
+foo = socket.getaddrinfo(server, 61440)
+addr = foo[0][4]
+client.connect(addr)
+
+
 def challenge(svr,ran):
     while True:
       t = struct.pack("<H", int(ran)%(0xFFFF))
-      s.sendto("\x01\x02"+t+"\x09"+"\x00"*15, (svr, 61440))
+      client.send(b"\x01\x02" + t + b"\x09" + b"\x00"*15)
       try:
-        data, address = s.recvfrom(1024)
+        data_sock, address = server.accept()
       except:
         if DEBUG:
           print '[challenge] timeout, retrying...'
         continue
         
-      if address == (svr, 61440):
-        break;
+      if address == svr:
+        data = data_sock.read(1024)
+        break
       else:
         continue
     if DEBUG:
-      print '[DEBUG] challenge:\n' + data.encode('hex')
-    if data[0] != '\x02':
+      print('[DEBUG] challenge:\n' + str(data))
+    if data[0] != 0x02:
       raise ChallengeException
     print '[challenge] challenge packet sent.'
     return data[4:8]
