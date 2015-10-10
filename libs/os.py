@@ -1,18 +1,32 @@
 import ffi
 import array
-import struct
-import errno
-import stat as stat_
-import _libc
+import ustruct as struct
+from libs import errno
+from libs import stat as stat_
+from libs import ffilib
 try:
     from _os import *
 except:
     pass
 
 
-libc = _libc.get()
+libc = ffilib.libc()
 
-errno_ = libc.var("i", "errno")
+try:
+    errno__ = libc.var("i", "errno")
+    def errno_(val=None):
+        if val is None:
+            return errno__.get()
+        errno__.set(val)
+except OSError:
+    __errno = libc.func("p", "__errno", "")
+    def errno_(val=None):
+        if val is None:
+            p = __errno()
+            buf = ffi.as_bytearray(p, 4)
+            return int.from_bytes(buf)
+        raise NotImplementedError
+
 chdir_ = libc.func("i", "chdir", "s")
 mkdir_ = libc.func("i", "mkdir", "si")
 rename_ = libc.func("i", "rename", "ss")
@@ -32,6 +46,7 @@ _exit_ = libc.func("v", "_exit", "i")
 getpid_ = libc.func("i", "getpid", "")
 waitpid_ = libc.func("i", "waitpid", "ipi")
 system_ = libc.func("i", "system", "s")
+getenv_ = libc.func("s", "getenv", "P")
 
 R_OK = const(4)
 W_OK = const(2)
@@ -58,8 +73,13 @@ environ = {"WARNING": "NOT_IMPLEMENTED"}
 
 
 def check_error(ret):
+    # Return True is error was EINTR (which usually means that OS call
+    # should be restarted).
     if ret == -1:
-        raise OSError(errno_.get())
+        e = errno_()
+        if e == errno.EINTR:
+            return True
+        raise OSError(e)
 
 def raise_error():
     raise OSError(errno_.get())
@@ -152,7 +172,7 @@ def read(fd, n):
     buf = bytearray(n)
     r = read_(fd, buf, n)
     check_error(r)
-    return buf[:r]
+    return bytes(buf[:r])
 
 def write(fd, buf):
     r = write_(fd, buf, len(buf))
@@ -199,6 +219,12 @@ def system(command):
     check_error(r)
     return r
 
+def getenv(var, default=None):
+    var = getenv_(var)
+    if var is None:
+        return default
+    return var
+
 def fsencode(s):
     if type(s) is bytes:
         return s
@@ -211,5 +237,6 @@ def fsdecode(s):
 
 
 def urandom(n):
-    with open("/dev/urandom", "rb") as f:
+    import builtins
+    with builtins.open("/dev/urandom", "rb") as f:
         return f.read(n)
