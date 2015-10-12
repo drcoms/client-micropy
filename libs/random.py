@@ -1,5 +1,4 @@
 from libs import struct
-from libs import time
 from libs import os
 
 def lastbit(f):
