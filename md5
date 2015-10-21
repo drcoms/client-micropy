@@ -1,0 +1,3 @@
+#!/bin/sh
+
+md5sum /tmp/drcom_var | cut -d ' ' -f 1 > /tmp/drcom_md5

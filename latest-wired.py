@@ -79,8 +79,16 @@ def challenge(svr,ran):
 	return data[4:8]
 
 def md5sum(s):
-	m = md5.digest(s)
-	return m
+	# m = md5.digest(s)
+	var = s.decode('utf-8')
+	with open('/tmp/drcom_var', 'wb') as f:
+		f.write(var)
+	os.system('./md5')
+	with open('/tmp/drcom_md5', 'r') as f:
+		foo = f.read().strip()
+	bar = binascii.unhexlify(foo)
+	# print (bar)
+	return bar
 
 def dump(n):
 	s = '%x' % n
