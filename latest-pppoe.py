@@ -41,8 +41,11 @@ def dump(n):
 class Socket:
 	def __init__(self, server, port=61440):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.ai = socket.getaddrinfo(server, port)
-		self.addr = self.ai[0][4]
+		self.addr = socket.getaddrinfo(server, port)[0][4]
+		self.addr2 = socket.getaddrinfo('0.0.0.0', port)[0][4]
+		self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.s.bind(self.addr2)
+		# self.s.settimeout(3)
 		self.s.connect(self.addr)
 		log("open local port:" + str(port))
 		log("DEBUG MODE:"+ str(DEBUG))

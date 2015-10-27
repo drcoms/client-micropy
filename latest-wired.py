@@ -1,6 +1,6 @@
 #!/usr/bin/micropython
 import sys
-from libs import struct, time, os, random, re, md5, binascii
+from libs import struct, time, os, random, re, binascii
 import usocket as socket
 
 # CONFIG
@@ -28,8 +28,11 @@ class LoginException (Exception):
 		pass
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-ai = socket.getaddrinfo(server, 61440)
-addr = ai[0][4]
+addr = socket.getaddrinfo(server, 61440)[0][4]
+addr2 = socket.getaddrinfo('0.0.0.0', 61440)[0][4]
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(addr2)
+# s.settimeout(3)
 s.connect(addr)
 
 #s.settimeout(3)
