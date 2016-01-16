@@ -187,10 +187,11 @@ def login(usr, pwd, svr):
         log('[login] packet sent.')
         i += 1
         if address == (svr, 61440):
-            if data[:1] == '\x04':
+            if data[:1] == b'\x04':
                 log('[login] loged in')
-                global p1 = data[31:33]
-                global p2 = data[37:39]
+                global p1, p2
+                p1 = data[31:33]
+                p2 = data[37:39]
                 break
             else:
                 if i >= 5 and UNLIMITED_RETRY == False :
@@ -377,7 +378,7 @@ def logout(svr):
     log('[logout_auth] send', str(packet))
     s.send(packet)
     data, address = s.recvfrom(1024)
-    if data[:1] == '\x04':
+    if data[:1] == b'\x04':
         log('[logout_auth] logouted.')
 
 
