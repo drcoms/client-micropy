@@ -1,6 +1,11 @@
 #!/usr/bin/micropython
 import sys
-from libs import struct, time, os, random, re, binascii
+import struct
+import time
+import os
+import random
+import re
+import binascii
 import usocket as socket
 
 # CONFIG
@@ -12,9 +17,9 @@ host_os = "TRANS-AM"
 host_ip = '2.2.2.2'
 PRIMARY_DNS = '8.8.8.8'
 dhcp_server = '3.3.3.3'
-mac = 0xb888e3051680
+mac = 0x0024549c67a6
 CONTROLCHECKSTATUS = b'\x20'
-ADAPTERNUM = b'\x05'
+ADAPTERNUM = b'\x01'
 KEEP_ALIVE_VERSION = b'\xd8\x02'
 AUTH_VERSION = b'\x25\x00'
 IPDOG = b'\x01'
@@ -38,8 +43,8 @@ s.connect(addr)
 
 SALT = ''
 tr = ''
-p1 = ''
-p2 = ''
+P1 = ''
+P2 = ''
 IS_TEST = True
 # specified fields based on version
 CONF = "/etc/drcom.conf"
@@ -174,7 +179,7 @@ def mkpkt(salt, usr, pwd, mac):
 
 def login(usr, pwd, svr):
     '''send login packet & recieve the right response'''
-    global SALT
+    global SALT, P1, P2
     i = 0
     while True:
         salt = challenge(svr, time.time() + random.randint(0xF, 0xFF))
@@ -189,16 +194,21 @@ def login(usr, pwd, svr):
         if address == (svr, 61440):
             if data[:1] == b'\x04':
                 log('[login] loged in')
-                global p1, p2
-                p1 = data[31:33]
-                p2 = data[37:39]
+                P1 = data[31:33]
+                P2 = data[37:39]
                 break
             else:
-                if i >= 5 and UNLIMITED_RETRY == False :
-                    log('[login] exception occured.')
-                    sys.exit(1)
+                log('[login] login failed.')
+                if IS_TEST:
+                    sys.exit(0)
+                time.sleep(30)
+                continue
         else:
-            continue
+            if i >= 5 and UNLIMITED_RETRY == False :
+                log('[login] exception occured.')
+                sys.exit(1)
+            else:
+                continue
     log('[login] login sent')
     #0.8 changed:
     return data[23:39]
@@ -358,8 +368,8 @@ def logout_pkt(salt, usr, pwd, mac):
     data += ADAPTERNUM
     data += (6*b'\x00' + dump((int(binascii.hexlify(data[4:10]), 16)) ^ mac))[-6:]
     data += ('Drco').encode('utf-8')
-    data += b''.join([bytes([int(i)]) for i in server.split('.')]) + p1
-    data += b''.join([bytes([int(i)]) for i in host_ip.split('.')]) + p2
+    data += b''.join([bytes([int(i)]) for i in server.split('.')]) + P1
+    data += b''.join([bytes([int(i)]) for i in host_ip.split('.')]) + P2
     return data
 
 def logout(svr):

@@ -1,5 +1,5 @@
-from libs import struct
-from libs import os
+import struct
+import os
 
 def lastbit(f):
     return struct.pack('!f', f)[-1] & 1
@@ -14,7 +14,6 @@ def randint(a, b):
 
 def randbelow(n):
     "Return a random int in the range [0,n).  Raises ValueError if n<=0."
-    # from Lib/random.py
     if n <= 0:
         pass
     k = len(bin(abs(n)))-2  # don't use (n-1) here because n can be 1

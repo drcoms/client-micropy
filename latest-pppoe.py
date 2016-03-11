@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from libs import struct, time, os, random, binascii
+import struct
+import time
+import os
+import random
+import binascii
 import usocket as socket
 
 # CONFIG
